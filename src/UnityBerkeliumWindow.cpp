@@ -8,6 +8,7 @@
 
 // Includes
 #include "UnityBerkeliumWindow.h"
+#include "berkelium/Context.hpp"
 
 
 /******************************

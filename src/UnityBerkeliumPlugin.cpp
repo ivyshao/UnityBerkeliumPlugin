@@ -9,6 +9,7 @@
 #include "global.h"
 #include "UnityBerkeliumWindow.h"
 #include <map>
+#include "berkelium/StringUtil.hpp"
 
 static const char *logFilename = "BerkeliumUnityTest.log";
 
@@ -204,11 +205,20 @@ PLUGIN_API void Berkelium_Window_executeJavascript(int windowID, char* javaScrip
 
 	size_t scriptLength = ::strlen(javaScript);
 
+    wchar_t *wctStrJScript = 0;
+    
 	// Convert to Wchar ( is there an easier way to do this? )
-	wchar_t *wctStrJScript = new wchar_t[scriptLength + 1];
+#if 1
+	std::wstring wideString = Berkelium::UTF8ToWide(Berkelium::UTF8String::point_to(javaScript, scriptLength)).data();
+	wctStrJScript = new wchar_t[wideString.length() + 1];
+	memcpy(wctStrJScript, wideString.data(), wideString.length() * sizeof(wchar_t));
+	wctStrJScript[wideString.length()] = 0;
+#else
+	wctStrJScript = new wchar_t[scriptLength + 1];
 	MultiByteToWideChar( CP_ACP, 0, javaScript, scriptLength, wctStrJScript, scriptLength);
 	wctStrJScript[scriptLength] = 0;
-
+#endif
+    
 	std::wcerr << "Javascript converted: " << wctStrJScript << endl;
 
 	if(pWindow)

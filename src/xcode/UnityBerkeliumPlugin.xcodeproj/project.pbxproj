@@ -1,0 +1,279 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6A3F7F8310AC147200948A73 /* UnityBerkeliumPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A3F7D2310AAFB3D00948A73 /* UnityBerkeliumPlugin.cpp */; };
+		C16970DF128DF7A1004F7866 /* berkelium.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C16970DE128DF7A1004F7866 /* berkelium.framework */; };
+		C16970F0128DF7A7004F7866 /* berkelium.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = C16970DE128DF7A1004F7866 /* berkelium.framework */; };
+		C17DA713128B33D700C0DCB1 /* UnityBerkeliumWindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C17DA712128B33D700C0DCB1 /* UnityBerkeliumWindow.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C1696EA9128DBF8F004F7866 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				C16970F0128DF7A7004F7866 /* berkelium.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		08EA7FFBFE8413EDC02AAC07 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		6A3F7D2310AAFB3D00948A73 /* UnityBerkeliumPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnityBerkeliumPlugin.cpp; path = ../UnityBerkeliumPlugin.cpp; sourceTree = "<group>"; };
+		6A3F7F7E10AC146D00948A73 /* UnityBerkeliumPlugin.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnityBerkeliumPlugin.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A3F7F7F10AC146D00948A73 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C16970DE128DF7A1004F7866 /* berkelium.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = berkelium.framework; path = ../../berkelium.framework; sourceTree = SOURCE_ROOT; };
+		C17DA710128B336D00C0DCB1 /* UnityBerkeliumWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnityBerkeliumWindow.h; path = ../UnityBerkeliumWindow.h; sourceTree = "<group>"; };
+		C17DA711128B338C00C0DCB1 /* global.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = global.h; path = ../global.h; sourceTree = "<group>"; };
+		C17DA712128B33D700C0DCB1 /* UnityBerkeliumWindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnityBerkeliumWindow.cpp; path = ../UnityBerkeliumWindow.cpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6A3F7F7C10AC146D00948A73 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C16970DF128DF7A1004F7866 /* berkelium.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		089C166AFE841209C02AAC07 /* XCodePlugin */ = {
+			isa = PBXGroup;
+			children = (
+				08FB77ADFE841716C02AAC07 /* Source */,
+				089C167CFE841241C02AAC07 /* Resources */,
+				089C1671FE841209C02AAC07 /* External Frameworks and Libraries */,
+				19C28FB4FE9D528D11CA2CBB /* Products */,
+				6A3F7F7F10AC146D00948A73 /* Info.plist */,
+			);
+			name = XCodePlugin;
+			sourceTree = "<group>";
+		};
+		089C1671FE841209C02AAC07 /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				08EA7FFBFE8413EDC02AAC07 /* Carbon.framework */,
+				C16970DE128DF7A1004F7866 /* berkelium.framework */,
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		089C167CFE841241C02AAC07 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		08FB77ADFE841716C02AAC07 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				6A3F7D2310AAFB3D00948A73 /* UnityBerkeliumPlugin.cpp */,
+				C17DA710128B336D00C0DCB1 /* UnityBerkeliumWindow.h */,
+				C17DA711128B338C00C0DCB1 /* global.h */,
+				C17DA712128B33D700C0DCB1 /* UnityBerkeliumWindow.cpp */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+		19C28FB4FE9D528D11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6A3F7F7E10AC146D00948A73 /* UnityBerkeliumPlugin.bundle */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6A3F7F7D10AC146D00948A73 /* UnityBerkeliumPlugin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6A3F7F8210AC146D00948A73 /* Build configuration list for PBXNativeTarget "UnityBerkeliumPlugin" */;
+			buildPhases = (
+				6A3F7F7A10AC146D00948A73 /* Resources */,
+				6A3F7F7B10AC146D00948A73 /* Sources */,
+				6A3F7F7C10AC146D00948A73 /* Frameworks */,
+				C1696EA9128DBF8F004F7866 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = UnityBerkeliumPlugin;
+			productName = ASimplePlugin;
+			productReference = 6A3F7F7E10AC146D00948A73 /* UnityBerkeliumPlugin.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		089C1669FE841209C02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 4FADC23708B4156C00ABE55E /* Build configuration list for PBXProject "UnityBerkeliumPlugin" */;
+			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
+			mainGroup = 089C166AFE841209C02AAC07 /* XCodePlugin */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6A3F7F7D10AC146D00948A73 /* UnityBerkeliumPlugin */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6A3F7F7A10AC146D00948A73 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6A3F7F7B10AC146D00948A73 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6A3F7F8310AC147200948A73 /* UnityBerkeliumPlugin.cpp in Sources */,
+				C17DA713128B33D700C0DCB1 /* UnityBerkeliumWindow.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		089C167DFE841241C02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C167EFE841241C02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		4FADC23808B4156C00ABE55E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.5;
+			};
+			name = Debug;
+		};
+		4FADC23908B4156C00ABE55E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.5;
+				VALID_ARCHS = i386;
+			};
+			name = Release;
+		};
+		6A3F7F8010AC146D00948A73 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = "\"./../..\"";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = UnityBerkeliumPlugin;
+				VALID_ARCHS = i386;
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Debug;
+		};
+		6A3F7F8110AC146D00948A73 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = "\"./../..\"";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = UnityBerkeliumPlugin;
+				WRAPPER_EXTENSION = bundle;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4FADC23708B4156C00ABE55E /* Build configuration list for PBXProject "UnityBerkeliumPlugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4FADC23808B4156C00ABE55E /* Debug */,
+				4FADC23908B4156C00ABE55E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6A3F7F8210AC146D00948A73 /* Build configuration list for PBXNativeTarget "UnityBerkeliumPlugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6A3F7F8010AC146D00948A73 /* Debug */,
+				6A3F7F8110AC146D00948A73 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 089C1669FE841209C02AAC07 /* Project object */;
+}
