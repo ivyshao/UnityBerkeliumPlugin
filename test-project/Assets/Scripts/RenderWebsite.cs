@@ -18,20 +18,56 @@ public class RenderWebsite : MonoBehaviour
 	public string url = "http://www.google.com";
 	public bool interactive = true;
 	public bool transparency = false;
+	public bool waitForTitle = true;
+	public bool initBerkelium = true;
 	
 	private Texture2D m_Texture;
 	private Color[] m_Pixels;
 	private GCHandle m_PixelsHandle;
 	private int m_TextureID;
+	private bool m_BrowserReady;
 	
+	private bool m_IsGuiTexture;
+	private Rect texRect;
+	private float texScaleX;
+	private float texScaleY;
+	private Vector3 lastMousePos;
+	
+	private bool m_HookUrlWasRequested;
+	private string m_HookUrl;
+
 	private UnityBerkelium.SetPixelsFunc m_setPixelsFunc;
 	private UnityBerkelium.ApplyTextureFunc m_applyTextureFunc;
+	private UnityBerkelium.ScrollRectFunc m_scrollRectFunc;
 	private UnityBerkelium.ExternalHostFunc m_externalHostFunc;
+	private UnityBerkelium.NavHookCb m_navHookCb;
+	private UnityBerkelium.LoadCb m_loadCb;
+	
+	private Component m_eventSubscriber;
+	
 	
     void Start ()
 	{
-		// Initialize Berkelium
-		UnityBerkelium.init();
+		if(initBerkelium)
+		{
+			string appDir = "/tmp/facing/webcache";
+			
+#if UNITY_STANDALONE_OSX
+			appDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal);
+			appDir = appDir + "/Library/Application Support/FacingHistory/webcache";
+#endif
+			
+#if UNITY_STANDALONE_WIN			
+			appDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData);
+			appDir = appDir + "/FacingHistory/webcache";
+#endif
+			
+			System.IO.Directory.CreateDirectory(appDir);
+			Debug.Log(appDir);
+			
+			// Initialize Berkelium
+			UnityBerkelium.init(appDir);
+		}
 		
 		// Create the texture that will represent the website (with optional transparency and without mipmaps)
 		TextureFormat texFormat = transparency ? TextureFormat.ARGB32 : TextureFormat.RGB24;
@@ -49,6 +85,18 @@ public class RenderWebsite : MonoBehaviour
 		// Improve rendering at shallow angles
 		m_Texture.filterMode = FilterMode.Trilinear;
 		m_Texture.anisoLevel = 2;
+		
+		// set us to initially not ready
+		m_BrowserReady = false;
+		
+		m_IsGuiTexture = false;
+		
+		m_HookUrlWasRequested = false;
+		
+		m_eventSubscriber = null;
+		
+		// init the texture
+		initTexturePixels();
 
 		// Assign texture to the renderer
 		if (renderer)
@@ -59,16 +107,20 @@ public class RenderWebsite : MonoBehaviour
 			if(transparency)
 				renderer.material.shader = Shader.Find("Transparent/Diffuse");
 			else
-				renderer.material.shader = Shader.Find("Diffuse");
+				renderer.material.shader = Shader.Find("Unshaded");
 			
-			// The texture has to be flipped
-			renderer.material.mainTextureScale = new Vector2(1,-1);
+			renderer.enabled = false;
 		}
 		// or gui texture
 		else if (GetComponent(typeof(GUITexture)))
 		{
 			GUITexture gui = GetComponent(typeof(GUITexture)) as GUITexture;
 			gui.texture = m_Texture;
+			guiTexture.enabled = false;
+			m_IsGuiTexture = true;
+	        texRect = gui.GetScreenRect();
+    	    texScaleX = texRect.width / width; //these two lines are important.
+	        texScaleY = texRect.height / height; //they scale the screen position to match the same pixel on
 		}
 		else
 		{
@@ -82,11 +134,17 @@ public class RenderWebsite : MonoBehaviour
 		// Paint callbacks
 		m_setPixelsFunc = new UnityBerkelium.SetPixelsFunc(this.SetPixels);
 		m_applyTextureFunc = new UnityBerkelium.ApplyTextureFunc(this.ApplyTexture);
-		UnityBerkelium.Window.setPaintFunctions(m_TextureID, m_setPixelsFunc, m_applyTextureFunc);
+		m_scrollRectFunc = new UnityBerkelium.ScrollRectFunc(this.ScrollRect);
+		UnityBerkelium.Window.setPaintFunctions(m_TextureID, m_setPixelsFunc, m_applyTextureFunc, m_scrollRectFunc);
 		
 		// Set the external host callback (for calling Unity functions from javascript)
 		m_externalHostFunc = new UnityBerkelium.ExternalHostFunc(this.onExternalHost);
 		UnityBerkelium.Window.setExternalHostCallback(m_TextureID, m_externalHostFunc);
+		
+		// Set the navigation callbacks
+		m_navHookCb = new UnityBerkelium.NavHookCb(this.onNavHook);
+		m_loadCb = new UnityBerkelium.LoadCb(this.onLoad);
+		UnityBerkelium.Window.setNavigationFunctions(m_TextureID, "http://www.facebook.com/connect/login_success.html", m_navHookCb, m_loadCb);
     }
 	
 	void SetPixels(/*int left, int top, int width, int height*/)
@@ -102,6 +160,15 @@ public class RenderWebsite : MonoBehaviour
 		m_Texture.Apply();
 	}
 	
+	void ScrollRect(int left, int top, int width, int height, int dx, int dy)
+	{
+		//print("Scroll rect: " + left + ", " + top + ", " + width + ", " + height);
+		
+		Color[] scrollPixels = m_Texture.GetPixels (left, top, width, height);
+			
+		m_Texture.SetPixels(left + dx, top + dy, width, height, scrollPixels, 0);
+	}
+
 	void onExternalHost(/*string message*/)
 	{
 		string message = Marshal.PtrToStringUni(UnityBerkelium.Window.getLastExternalHostMessage(m_TextureID));
@@ -128,6 +195,41 @@ public class RenderWebsite : MonoBehaviour
 			
 			// Broadcast the function
 			SendMessage(func, args, SendMessageOptions.DontRequireReceiver);
+		}
+	}
+	
+	void onNavHook(string url)
+	{
+		if(m_eventSubscriber)
+		{
+			m_eventSubscriber.SendMessage("onNavHook", url);
+		}
+		
+		m_HookUrl = url;
+		m_HookUrlWasRequested = true;
+		if(m_IsGuiTexture)
+		{
+			guiTexture.enabled = false;
+		}
+		else
+		{
+			renderer.enabled = false;
+		}		
+	}
+
+	void onLoad(string url)
+	{
+		if(m_BrowserReady || UnityBerkelium.Window.everReceivedTitleUpdate(m_TextureID) || (waitForTitle == false))
+		{
+			if(m_IsGuiTexture)
+			{
+				guiTexture.enabled = true;
+			}
+			else
+			{
+				renderer.enabled = true;
+			}
+			m_BrowserReady = true;
 		}
 	}
 
@@ -157,80 +259,148 @@ public class RenderWebsite : MonoBehaviour
 	{
 	}
 	
-	void OnMouseOver()
-	{
-		// Only when interactive is enabled
-		if(!interactive)
-			return;
-
-		RaycastHit hit;
-		if (Physics.Raycast (Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
-		{
-			int x = /*width -*/ (int) (hit.textureCoord.x * width);
-			int y = height - (int) (hit.textureCoord.y * height);
-	
-			UnityBerkelium.Window.mouseMove(m_TextureID, x, y);
-		}
-	}
-	
 	void OnMouseExit()
 	{
 	}
 	
-	void OnMouseDown()
+	void TestMouseOver()
 	{
 		// Only when interactive is enabled
 		if(!interactive)
 			return;
 		
-		RaycastHit hit;
-		if (Physics.Raycast (Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+		bool eventActive = false;
+		int x = 0, y = 0;
+		
+		if(m_IsGuiTexture)
 		{
-			int x = /*width -*/ (int) (hit.textureCoord.x * width);
-			int y = height - (int) (hit.textureCoord.y * height);
-			
-			// Focus the window
-			UnityBerkelium.Window.focus(m_TextureID);
-	
-			UnityBerkelium.Window.mouseMove(m_TextureID, x, y);
-			UnityBerkelium.Window.mouseDown(m_TextureID, 0);
+			eventActive = texRect.Contains(Input.mousePosition);
+     		float offset_x = Input.mousePosition.x - texRect.xMin; //Find the mouse position
+     		float offset_y = height - (Input.mousePosition.y - texRect.yMin); //Find the mouse position
+
+     		x = (int)(offset_x / texScaleX);
+			y = (int)(offset_y / texScaleY);
+		}
+		else
+		{
+			RaycastHit hit;
+			if (Physics.Raycast (Camera.main.ScreenPointToRay(Input.mousePosition), out hit) && hit.transform == this.transform)
+			{
+				eventActive = true;
+				x = /*width -*/ (int) (hit.textureCoord.x * width);
+				y = height - (int) (hit.textureCoord.y * height);
+			}
+		}
+		
+		if(eventActive)
+		{
+			networkView.RPC ("BerkeliumMouseOver", RPCMode.All, x, y);
 		}
 	}
 	
-	void OnMouseUp()
+	void TestMouseDown()
+	{
+		// Only when interactive is enabled
+		if(!interactive)
+			return;
+		
+		bool eventActive = false;
+		int x = 0, y = 0;
+		
+		if(m_IsGuiTexture)
+		{
+			eventActive = texRect.Contains(Input.mousePosition);
+     		float offset_x = Input.mousePosition.x - texRect.xMin; //Find the mouse position
+     		float offset_y = height - (Input.mousePosition.y - texRect.yMin); //Find the mouse position
+
+     		x = (int)(offset_x / texScaleX);
+			y = (int)(offset_y / texScaleY);
+		}
+		else
+		{
+			RaycastHit hit;
+			if (Physics.Raycast (Camera.main.ScreenPointToRay(Input.mousePosition), out hit) && hit.transform == this.transform)
+			{
+				eventActive = true;
+				x = /*width -*/ (int) (hit.textureCoord.x * width);
+				y = height - (int) (hit.textureCoord.y * height);
+			}
+		}
+		
+		if(eventActive)
+		{
+			networkView.RPC ("BerkeliumMouseDown", RPCMode.All, x, y);
+		}
+	}
+	
+	void TestMouseUp()
 	{
 		// Only when interactive is enabled
 		if(!interactive)
 			return;
 
-		RaycastHit hit;
-		if (Physics.Raycast (Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+		bool eventActive = false;
+		int x = 0, y = 0;
+		
+		if(m_IsGuiTexture)
 		{
-			int x = /*width -*/ (int) (hit.textureCoord.x * width);
-			int y = height - (int) (hit.textureCoord.y * height);
-	
-			UnityBerkelium.Window.mouseMove(m_TextureID, x, y);
-			UnityBerkelium.Window.mouseUp(m_TextureID, 0);
+			eventActive = texRect.Contains(Input.mousePosition);
+     		float offset_x = Input.mousePosition.x - texRect.xMin; //Find the mouse position
+     		float offset_y = height - (Input.mousePosition.y - texRect.yMin); //Find the mouse position
+
+     		x = (int)(offset_x / texScaleX);
+			y = (int)(offset_y / texScaleY);
+		}
+		else
+		{
+			RaycastHit hit;
+			if (Physics.Raycast (Camera.main.ScreenPointToRay(Input.mousePosition), out hit) && hit.transform == this.transform)
+			{
+				eventActive = true;
+				x = /*width -*/ (int) (hit.textureCoord.x * width);
+				y = height - (int) (hit.textureCoord.y * height);
+			}
+		}
+		
+		if(eventActive)
+		{
+			networkView.RPC ("BerkeliumMouseUp", RPCMode.All, x, y);
 		}
 	}
 	
 	void OnGUI()
 	{
+		if(!interactive) return;
+		
+		if(Vector3.Distance(Input.mousePosition, lastMousePos) >= 2)
+		{
+			lastMousePos = Input.mousePosition;
+			TestMouseOver();
+		}
+		
+		if(Event.current == null) return;
+		
 		// Inject input into the page when the GUI doesn't have focus
 		if(Event.current.isKey && GUIUtility.keyboardControl == 0)
 		{
-			// Insert character
-			UnityBerkelium.Window.textEvent(m_TextureID, Event.current.character);
-			
 			KeyCode key = Event.current.keyCode;
 			bool pressed = (Event.current.type == EventType.KeyDown);
 			
-			// Special case for backspace
+			if(key == KeyCode.Return)
+			{
+				UnityBerkelium.Window.keyEvent(m_TextureID, pressed, 0, 13, 0);
+				return;
+			}
+			
+			// Insert character
+			UnityBerkelium.Window.textEvent(m_TextureID, Event.current.character);
+			
+			// Special case for backspace or tab
 			if(key == KeyCode.Backspace)
 				UnityBerkelium.Window.keyEvent(m_TextureID, pressed, 0, 08, 0);
-			// Special case for enter
-			else if(key == KeyCode.Return)
-				UnityBerkelium.Window.keyEvent(m_TextureID, pressed, 0, 13, 0);
+			else if(key == KeyCode.Tab)
+				// shift mod is 1 << 0
+				UnityBerkelium.Window.keyEvent(m_TextureID, pressed, Event.current.shift ? 1 : 0, 09, 0);
 			
 			// TODO Handle all keys
 			/*int mods = 0;
@@ -239,6 +409,46 @@ public class RenderWebsite : MonoBehaviour
 			UnityBerkelium.Window.keyEvent(m_TextureID, pressed, mods, vk_code, scancode);
 			print("Key event: " + pressed + ", " + Event.current.keyCode);*/
 		}
+		else
+		{
+			switch (Event.current.type)
+			{
+				case EventType.MouseDown:
+					TestMouseDown();
+					break;
+
+				case EventType.MouseUp:
+					TestMouseUp();
+					break;
+			}
+		}
+	}
+	
+	void initTexturePixels()
+	{
+	    int mipCount = Mathf.Min( 3, m_Texture.mipmapCount );
+	    
+	    // tint each mip level
+	    for( int mip = 0; mip < mipCount; ++mip ) {
+	        Color[] cols = m_Texture.GetPixels( mip );
+	        for( int i = 0; i < cols.Length; ++i ) {
+	            cols[i] = new Color( 0, 0, 0 );
+	        }
+	        m_Texture.SetPixels( cols, mip );
+	    }
+	    
+	    // actually apply all SetPixels, don't recalculate mip levels
+	    m_Texture.Apply( false );
+	}
+	
+    public string getHookUrl()
+	{
+		return m_HookUrl;
+	}
+	
+    public bool hookUrlWasRequested()
+	{
+		return m_HookUrlWasRequested;
 	}
 	
 	public void navigateTo(string url)
@@ -246,10 +456,43 @@ public class RenderWebsite : MonoBehaviour
 		print("Changing url to " + url);
 		UnityBerkelium.Window.navigateTo(m_TextureID, url);
 	}
+	
+	public void subscribeForEvents(Component eventSubscriber)
+	{
+		m_eventSubscriber = eventSubscriber;
+	}
 
 	public void executeJavascript(string javascript)
 	{
 		print("Executing Javascript: " + javascript);
 		UnityBerkelium.Window.executeJavascript(m_TextureID, javascript);
+	}
+	
+	public Texture2D getTexture()
+	{
+		return m_Texture;
+	}
+
+	[RPC] 
+	void BerkeliumMouseUp(int x, int y) 
+	{
+		UnityBerkelium.Window.mouseMove(m_TextureID, x, y);
+		UnityBerkelium.Window.mouseUp(m_TextureID, 0);
+	}
+	
+	[RPC]
+	void BerkeliumMouseDown(int x, int y)
+	{
+		// Focus the window
+		UnityBerkelium.Window.focus(m_TextureID);
+	
+		UnityBerkelium.Window.mouseMove(m_TextureID, x, y);
+		UnityBerkelium.Window.mouseDown(m_TextureID, 0);
+	}
+	
+	[RPC]
+	void BerkeliumMouseOver(int x, int y)
+	{
+		UnityBerkelium.Window.mouseMove(m_TextureID, x, y);
 	}
 }
