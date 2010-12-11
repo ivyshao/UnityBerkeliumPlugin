@@ -16,6 +16,7 @@ public class RenderWebsite : MonoBehaviour
 	public int width = 512;
 	public int height = 512;
 	public string url = "http://www.google.com";
+	public string navHookUrl = "http://url_i_am_looking_for.com";
 	public bool interactive = true;
 	public bool transparency = false;
 	public bool waitForTitle = true;
@@ -50,16 +51,16 @@ public class RenderWebsite : MonoBehaviour
 	{
 		if(initBerkelium)
 		{
-			string appDir = "/tmp/facing/webcache";
+			string appDir = "/tmp/webcache";
 			
 #if UNITY_STANDALONE_OSX
 			appDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal);
-			appDir = appDir + "/Library/Application Support/FacingHistory/webcache";
+			appDir = appDir + "/Library/Application Support/MyAppName/webcache";
 #endif
 			
 #if UNITY_STANDALONE_WIN			
 			appDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData);
-			appDir = appDir + "/FacingHistory/webcache";
+			appDir = appDir + "/MyAppName/webcache";
 #endif
 			
 			System.IO.Directory.CreateDirectory(appDir);
@@ -144,7 +145,7 @@ public class RenderWebsite : MonoBehaviour
 		// Set the navigation callbacks
 		m_navHookCb = new UnityBerkelium.NavHookCb(this.onNavHook);
 		m_loadCb = new UnityBerkelium.LoadCb(this.onLoad);
-		UnityBerkelium.Window.setNavigationFunctions(m_TextureID, "http://www.facebook.com/connect/login_success.html", m_navHookCb, m_loadCb);
+		UnityBerkelium.Window.setNavigationFunctions(m_TextureID, navHookUrl, m_navHookCb, m_loadCb);
     }
 	
 	void SetPixels(/*int left, int top, int width, int height*/)
