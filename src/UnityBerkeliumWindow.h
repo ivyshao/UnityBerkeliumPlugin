@@ -25,6 +25,9 @@ public:
 	//typedef void (*SetPixelsFunc)(Berkelium::Rect);
 	typedef void (*SetPixelsFunc)(/*int left, int top, int width, int height*/);
 	typedef void (*ApplyTextureFunc)();
+	typedef void (*ScrollRectFunc)(int left, int top, int width, int height, int dx, int dy);
+	typedef void (*NavHookCb)(const char*);
+    typedef void (*LoadCb)(const char*);
 
 	// The callback function that is called from a javascript externalHost call
 	typedef void (*ExternalHostFunc)(/*const wchar_t *message*/);
@@ -40,14 +43,18 @@ public:
 	void navigateTo(const string &url);
 
 	// Callbacks
-	void setPaintFunctions(SetPixelsFunc setPixelsFunc, ApplyTextureFunc applyTextureFunc);
+	void setPaintFunctions(SetPixelsFunc setPixelsFunc, ApplyTextureFunc applyTextureFunc, ScrollRectFunc scrollRectFunc);
 	void setExternalHostCallback(ExternalHostFunc callback);
+	void setNavigationFunctions(char* hookUrl, UnityBerkeliumWindow::NavHookCb navCb, UnityBerkeliumWindow::LoadCb loadCb);
 
 	// Current paint info
 	const Berkelium::Rect &getLastDirtyRect() const { return m_lastDirtyRect; }
 
 	// Last external host message
 	const std::wstring &getLastExternalHostMessage() const { return m_lastExternalHostMessage; }
+    
+	// Did we ever receive a title update (useful for delaying rendering until title updates)
+	const bool everReceivedTitleUpdate() const { return m_gotTitleUpdate; }
 
 protected:
 	// Berkelium::WindowDelegate functions
@@ -79,7 +86,7 @@ protected:
 	virtual void onShowContextMenu(Berkelium::Window *win, const Berkelium::ContextMenuEventArgs& args);
 
 	// Protected functions
-	void convertColors(const Berkelium::Rect &rect, const unsigned char *sourceBuffer);
+	void convertColors(const Berkelium::Rect &rect, const unsigned char *sourceBuffer, const Berkelium::Rect &srcRect);
 
 	// Member variables
 	Berkelium::Window *m_pWindow;
@@ -91,10 +98,18 @@ protected:
 
 	SetPixelsFunc m_setPixelsFunc;
 	ApplyTextureFunc m_applyTextureFunc;
+    ScrollRectFunc m_scrollRectFunc;
 	Berkelium::Rect m_lastDirtyRect;
 
 	ExternalHostFunc m_externalHostFunc;
 	std::wstring m_lastExternalHostMessage;
+    
+	NavHookCb m_navHookCb;
+	string m_navHookUrl;
+	LoadCb m_loadCb;
+    string m_addressUrl;
+    
+    bool m_gotTitleUpdate;
 };
 
 #endif // UNITYBERKELIUMWINDOW_H

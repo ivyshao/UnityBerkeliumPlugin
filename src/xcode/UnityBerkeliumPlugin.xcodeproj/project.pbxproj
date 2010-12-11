@@ -32,7 +32,7 @@
 		6A3F7D2310AAFB3D00948A73 /* UnityBerkeliumPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnityBerkeliumPlugin.cpp; path = ../UnityBerkeliumPlugin.cpp; sourceTree = "<group>"; };
 		6A3F7F7E10AC146D00948A73 /* UnityBerkeliumPlugin.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnityBerkeliumPlugin.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A3F7F7F10AC146D00948A73 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C16970DE128DF7A1004F7866 /* berkelium.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = berkelium.framework; path = ../../berkelium.framework; sourceTree = SOURCE_ROOT; };
+		C16970DE128DF7A1004F7866 /* berkelium.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = berkelium.framework; path = ../../../berkelium/xcode/berkelium_framework/build/Release/berkelium.framework; sourceTree = SOURCE_ROOT; };
 		C17DA710128B336D00C0DCB1 /* UnityBerkeliumWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnityBerkeliumWindow.h; path = ../UnityBerkeliumWindow.h; sourceTree = "<group>"; };
 		C17DA711128B338C00C0DCB1 /* global.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = global.h; path = ../global.h; sourceTree = "<group>"; };
 		C17DA712128B33D700C0DCB1 /* UnityBerkeliumWindow.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnityBerkeliumWindow.cpp; path = ../UnityBerkeliumWindow.cpp; sourceTree = "<group>"; };

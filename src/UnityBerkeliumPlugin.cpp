@@ -37,7 +37,7 @@ UnityBerkeliumWindow *getWindow(int id)
 * Global functions *
 *******************/
 
-PLUGIN_API void Berkelium_init()
+PLUGIN_API void Berkelium_init(const char* home_dir)
 {
 	if(refCount == 0)
 	{
@@ -46,7 +46,7 @@ PLUGIN_API void Berkelium_init()
 
 		// Initialize the Berkelium engine
 		cerr << "First reference to Berkelium initialized: initializing the library" << endl;
-		Berkelium::init(Berkelium::FileString::empty());
+		Berkelium::init(Berkelium::FileString::point_to(home_dir));
 		cerr << "... done initializing Berkelium" << endl;
 	}
 
@@ -126,11 +126,11 @@ PLUGIN_API void Berkelium_Window_navigateTo(int windowID, char *url)
 		pWindow->navigateTo(url);
 }
 
-PLUGIN_API void Berkelium_Window_setPaintFunctions(int windowID, UnityBerkeliumWindow::SetPixelsFunc setPixelsFunc, UnityBerkeliumWindow::ApplyTextureFunc applyTextureFunc)
+PLUGIN_API void Berkelium_Window_setPaintFunctions(int windowID, UnityBerkeliumWindow::SetPixelsFunc setPixelsFunc, UnityBerkeliumWindow::ApplyTextureFunc applyTextureFunc, UnityBerkeliumWindow::ScrollRectFunc scrollRectFunc)
 {
 	UnityBerkeliumWindow *pWindow = getWindow(windowID);
 	if(pWindow)
-		pWindow->setPaintFunctions(setPixelsFunc, applyTextureFunc);
+		pWindow->setPaintFunctions(setPixelsFunc, applyTextureFunc, scrollRectFunc);
 }
 
 // Note: we need this function because I can't get parameters in function pointers to work properly
@@ -143,6 +143,13 @@ PLUGIN_API Berkelium::Rect Berkelium_Window_getLastDirtyRect(int windowID)
 		result = pWindow->getLastDirtyRect();
 
 	return result;
+}
+
+PLUGIN_API void Berkelium_Window_setNavigationFunctions(int windowID, char* hookUrl, UnityBerkeliumWindow::NavHookCb navCb, UnityBerkeliumWindow::LoadCb loadCb)
+{
+	UnityBerkeliumWindow *pWindow = getWindow(windowID);
+	if(pWindow)
+		pWindow->setNavigationFunctions(hookUrl, navCb, loadCb);
 }
 
 PLUGIN_API void Berkelium_Window_focus(int windowID)
@@ -244,3 +251,13 @@ PLUGIN_API const wchar_t *Berkelium_Window_getLastExternalHostMessage(int window
 	else
 		return L"";
 }
+
+PLUGIN_API bool Berkelium_Window_everReceivedTitleUpdate(int windowID)
+{
+	UnityBerkeliumWindow *pWindow = getWindow(windowID);
+	if(pWindow)
+		return pWindow->everReceivedTitleUpdate();
+	else
+		return false;
+}
+

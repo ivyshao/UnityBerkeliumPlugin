@@ -17,7 +17,7 @@
 
 UnityBerkeliumWindow::UnityBerkeliumWindow(int uniqueID, float *buffer, bool transparency, int width, int height, const string &url)
 : m_id(uniqueID), m_buffer(buffer), m_transparency(transparency), m_width(width), m_height(height), m_url(url)
-, m_setPixelsFunc(0), m_applyTextureFunc(0), m_externalHostFunc(0)
+, m_setPixelsFunc(0), m_applyTextureFunc(0), m_externalHostFunc(0), m_navHookCb(0), m_loadCb(0), m_gotTitleUpdate(false)
 {
 	assert(m_buffer);
 	assert(width > 0 && height > 0);
@@ -29,6 +29,7 @@ UnityBerkeliumWindow::UnityBerkeliumWindow(int uniqueID, float *buffer, bool tra
 	m_pWindow->setDelegate(this);
 	m_pWindow->setTransparent(transparency);
 	m_pWindow->resize(width, height);
+    m_pWindow->focus();
 	m_pWindow->navigateTo(url.data(), url.length());
 }
 
@@ -47,15 +48,23 @@ void UnityBerkeliumWindow::navigateTo(const string &url)
 	m_pWindow->navigateTo(url.data(), url.length());
 }
 
-void UnityBerkeliumWindow::setPaintFunctions(SetPixelsFunc setPixelsFunc, ApplyTextureFunc applyTextureFunc)
+void UnityBerkeliumWindow::setPaintFunctions(SetPixelsFunc setPixelsFunc, ApplyTextureFunc applyTextureFunc, ScrollRectFunc scrollRectFunc)
 {
 	m_setPixelsFunc = setPixelsFunc;
 	m_applyTextureFunc = applyTextureFunc;
+	m_scrollRectFunc = scrollRectFunc;
 }
 
 void UnityBerkeliumWindow::setExternalHostCallback(ExternalHostFunc callback)
 {
 	m_externalHostFunc = callback;
+}
+
+void UnityBerkeliumWindow::setNavigationFunctions(char* hookUrl, UnityBerkeliumWindow::NavHookCb navCb, UnityBerkeliumWindow::LoadCb loadCb)
+{
+    m_navHookUrl = hookUrl;
+    m_navHookCb = navCb;
+    m_loadCb = loadCb;
 }
 
 
@@ -160,6 +169,8 @@ void UnityBerkeliumWindow::onAddressBarChanged(Berkelium::Window *win, Berkelium
 {
 	cerr << "[UnityBerkeliumWindow] onAddressBarChanged called (window: " << win << ")" << endl;
 	cerr << "  newURL: " << newURL << endl;
+    
+    m_addressUrl = newURL.data();
 }
 
 void UnityBerkeliumWindow::onStartLoading(Berkelium::Window *win, Berkelium::URLString newURL)
@@ -171,6 +182,11 @@ void UnityBerkeliumWindow::onStartLoading(Berkelium::Window *win, Berkelium::URL
 void UnityBerkeliumWindow::onLoad(Berkelium::Window *win)
 {
 	cerr << "[UnityBerkeliumWindow] onLoad called (window: " << win << ")" << endl;
+    
+    if(m_loadCb)
+    {
+        m_loadCb(m_addressUrl.data());
+    }
 }
 
 void UnityBerkeliumWindow::onCrashedWorker(Berkelium::Window *win)
@@ -221,6 +237,14 @@ void UnityBerkeliumWindow::onNavigationRequested(Berkelium::Window *win, Berkeli
 	cerr << "  newUrl: " << newUrl << endl;
 	cerr << "  referrer: " << referrer << endl;
 	cerr << "  isNewWindow: " << (isNewWindow ? "yes" : "no") << endl;
+
+    if(m_navHookCb && strncmp(newUrl.data(), m_navHookUrl.data(), m_navHookUrl.length()) == 0)
+    {
+        cerr << "  !! Hooked navigation and cancelled!! " << endl;
+		m_navHookCb(newUrl.data());
+        cancelDefaultAction = true;
+        return;
+    }
 }
 
 void UnityBerkeliumWindow::onLoadingStateChanged(Berkelium::Window *win, bool isLoading)
@@ -231,6 +255,7 @@ void UnityBerkeliumWindow::onLoadingStateChanged(Berkelium::Window *win, bool is
 
 void UnityBerkeliumWindow::onTitleChanged(Berkelium::Window *win, Berkelium::WideString title)
 {
+    m_gotTitleUpdate = true;
 	cerr << "[UnityBerkeliumWindow] onTitleChanged called (window: " << win << ")" << endl;
 	wcerr << "  title: " << title << endl;
 }
@@ -286,17 +311,32 @@ void UnityBerkeliumWindow::onPaint(Berkelium::Window *win, const unsigned char *
 		cerr << "  rect " << i << ": (left=" << copyRects[i].left() << ", width=" << copyRects[i].width() << ", top=" << copyRects[i].top() << ", height=" << copyRects[i].height() << ")" << endl;
 #endif
 
-	//! @todo Handle Scrolling
+	// Handle Scrolling
 	if(dx != 0 || dy != 0)
 	{
+        // scroll_rect contains the Rect we need to move
+        // First we figure out where the the data is moved to by translating it
+        Berkelium::Rect scrolled_rect = scrollRect.translate(-dx, -dy);
+        // Next we figure out where they intersect, giving the scrolled
+        // region
+        Berkelium::Rect scrolled_shared_rect = scrollRect.intersect(scrolled_rect);
+        // Only do scrolling if they have non-zero intersection
+        if (scrolled_shared_rect.width() > 0 && scrolled_shared_rect.height() > 0) {
+            // And the scroll is performed by moving shared_rect by (dx,dy)
+            scrolled_shared_rect.mTop = m_height - scrolled_shared_rect.bottom();
+            dy = -dy;
+            if(m_scrollRectFunc)
+                m_scrollRectFunc(scrolled_shared_rect.left(), scrolled_shared_rect.top(), scrolled_shared_rect.width(), scrolled_shared_rect.height(), dx, dy);
+      }
 	}
 
 	// Apply the dirty rectangles
 	for(size_t i = 0; i < numCopyRects; ++i)
 	{
-		convertColors(copyRects[i], sourceBuffer);
+		convertColors(copyRects[i], sourceBuffer, sourceBufferRect);
 		m_lastDirtyRect = copyRects[i];
-
+        m_lastDirtyRect.mTop = m_height - m_lastDirtyRect.bottom();
+        
 		if(m_setPixelsFunc)
 			m_setPixelsFunc(/*rect.left(), rect.top(), rect.width(), rect.height()*/);
 	}
@@ -350,24 +390,25 @@ void UnityBerkeliumWindow::onShowContextMenu(Berkelium::Window *win, const Berke
 * Protected functions *
 **********************/
 
-void UnityBerkeliumWindow::convertColors(const Berkelium::Rect &rect, const unsigned char *sourceBuffer)
+void UnityBerkeliumWindow::convertColors(const Berkelium::Rect &rect, const unsigned char *sourceBuffer, const Berkelium::Rect &srcRect)
 {
-	// Note: we convert from BGRA bytes to RGBA floats. RGB24 textures in Unity are still 32bit in memory.
-	for(int x = rect.left(); x < rect.right(); ++x)
+    int top = rect.top() - srcRect.top();
+    int left = rect.left() - srcRect.left();
+	
+    // Note: we convert from BGRA bytes to RGBA floats. RGB24 textures in Unity are still 32bit in memory.
+	for(int x = 0; x < rect.width(); ++x)
 	{
-		for(int y = rect.top(); y < rect.bottom(); ++y)
+		for(int y = 0; y < rect.height(); ++y)
 		{
-			// We copy to the beginning of the buffer
-			// (because we can't change the start address of the buffer we provide the Unity .SetPixels function
-			int idx = (y - rect.top()) * rect.width() + (x - rect.left());
-			//int idx = y * rect.width() + x;
+			int idx = (rect.height() - (y + 1)) * rect.width() + x;
+			int sourceIdx = left + (y + top) * srcRect.width() + x;
 
-			m_buffer[idx * 4 + 0] = sourceBuffer[idx * 4 + 2] / 255.0f; // R
-			m_buffer[idx * 4 + 1] = sourceBuffer[idx * 4 + 1] / 255.0f; // G
-			m_buffer[idx * 4 + 2] = sourceBuffer[idx * 4 + 0] / 255.0f; // B
+			m_buffer[idx * 4 + 0] = sourceBuffer[sourceIdx * 4 + 2] / 255.0f; // R
+			m_buffer[idx * 4 + 1] = sourceBuffer[sourceIdx * 4 + 1] / 255.0f; // G
+			m_buffer[idx * 4 + 2] = sourceBuffer[sourceIdx * 4 + 0] / 255.0f; // B
 			
 			if(m_transparency)
-				m_buffer[idx * 4 + 3] = sourceBuffer[idx * 4 + 3] / 255.0f; // A
+				m_buffer[idx * 4 + 3] = sourceBuffer[sourceIdx * 4 + 3] / 255.0f; // A
 		}
 	}
 }
