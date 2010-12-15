@@ -27,12 +27,21 @@ public class UnityBerkelium
 	// The delgate that is called when all dirty rectangles can be applied
 	public delegate void ApplyTextureFunc();
 	
+	// The delegate that is called when the texture needs scrolling
+	public delegate void ScrollRectFunc(int left, int top, int width, int height, int dx, int dy);
+	
 	// The delegate that is called when javascript calls to Unity
 	public delegate void ExternalHostFunc(/*string message*/);
+	
+	// The delegate that is called when a registered hook URL is requested
+	public delegate void NavHookCb(string url);
+	
+	// The delegate that is called when a URL has completed loading
+	public delegate void LoadCb(string url);
 
 	// Imported functions
 	[DllImport ("UnityBerkeliumPlugin", EntryPoint="Berkelium_init")]
-	public static extern void init();
+	public static extern void init(string homeDir);
     
 	[DllImport ("UnityBerkeliumPlugin", EntryPoint="Berkelium_destroy")]
 	public static extern void destroy();
@@ -52,7 +61,10 @@ public class UnityBerkelium
 		public static extern void navigateTo(int windowID, string url);
 		
 		[DllImport ("UnityBerkeliumPlugin", EntryPoint="Berkelium_Window_setPaintFunctions")]
-		public static extern void setPaintFunctions(int windowID, SetPixelsFunc setPixelsFunc, ApplyTextureFunc applyTextureFunc);
+		public static extern void setPaintFunctions(int windowID, SetPixelsFunc setPixelsFunc, ApplyTextureFunc applyTextureFunc, ScrollRectFunc scrollRectFunc);
+		
+		[DllImport ("UnityBerkeliumPlugin", EntryPoint="Berkelium_Window_setNavigationFunctions")]
+		public static extern void setNavigationFunctions(int windowID, string hookUrl, NavHookCb navCb, LoadCb loadCb);
 		
 		[DllImport ("UnityBerkeliumPlugin", EntryPoint="Berkelium_Window_getLastDirtyRect")]
 		public static extern Rect getLastDirtyRect(int windowID);
@@ -86,6 +98,9 @@ public class UnityBerkelium
 		
 		[DllImport ("UnityBerkeliumPlugin", EntryPoint="Berkelium_Window_getLastExternalHostMessage")]
 		public static extern IntPtr getLastExternalHostMessage(int windowID);
+
+		[DllImport ("UnityBerkeliumPlugin", EntryPoint="Berkelium_Window_everReceivedTitleUpdate")]
+		public static extern bool everReceivedTitleUpdate(int windowID);
 	}
 	
 	public int convertKeyCode(KeyCode keyCode)
